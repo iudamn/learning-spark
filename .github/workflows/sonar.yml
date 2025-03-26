@@ -1,8 +1,7 @@
 name: Build
 on: push
- 
-jobs: 
- 
+
+jobs:
   sonarqube:
     name: SonarQube Scan
     runs-on: ubuntu-latest
@@ -11,13 +10,24 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
           node-version: 20
+
       - name: Install dependencies
         run: yarn install
- 
+
+      - name: Start SonarQube
+        run: |
+          docker run -d --name sonarqube -p 9000:9000 sonarqube:lts
+          echo "Waiting for SonarQube to be ready..."
+          until curl -s http://127.0.0.1:9000/api/system/status | grep -q '"status":"UP"'; do
+            sleep 5
+          done
+          echo "SonarQube is ready!"
+
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         env:
